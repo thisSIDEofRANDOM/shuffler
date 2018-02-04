@@ -52,7 +52,7 @@ while :; do
    vindex=$((RANDOM%${#videos[@]}))
   
    # Get time if we don't have it for next video
-   if [ -z "${times[$vindex]}" ]; then gettime $vindex; fi
+   if [ -z "${times[$vindex]}" ]; then gettime $vindex || break; fi
 
    # Set random start time based on duration
    starttime=$((RANDOM%(${times[$vindex]}-$dur)))
