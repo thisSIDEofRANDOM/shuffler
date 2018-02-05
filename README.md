@@ -1,5 +1,5 @@
 # shuffler
-Cut clips out of a list of youtube videos for playback/xscreensaver
+Cut clips of X time from a playlist of youtube/twitch/local videos. Useful for general playback or xscreensaver looping
 
 ## Usage
 ```
