@@ -37,7 +37,7 @@ ail -20 ${HOME}/.xscreensaver
   GL: 				splodesic -root				    \n\
   GL: 				vigilance -root				    \n\
   GL: 				esper -root				    \n\
-				shuffler				    \n\
+				shuffler					    \n\
 
 
 pointerPollTime:    0:00:05
