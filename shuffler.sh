@@ -44,6 +44,12 @@ cleanup() {
 }
 trap cleanup INT TERM
 
+# TEMPORARY SETTING FOR DEMO WINDOW
+if [[ ${_PPNAME} == xscreensaver-demo ]]; then
+   # The xscreensaver demo window passes custom args overwriting duration
+   dur=10
+fi
+
 # PRINT TITLES AND EXIT
 if [[ $@ =~ gettitles ]]; then
    for i in ${!videos[@]}; do
@@ -123,12 +129,6 @@ playvid () {
       mpv --osc=no --really-quiet --mute=yes --no-border --geometry=961x526+959+554 --start=${starttime:-0} --length=${dur} ${videos[$1]} &
    fi
 }
-
-# TEMPORARY SETTING FOR DEMO WINDOW
-if [[ ${_PPNAME} == xscreensaver-demo ]]; then
-   # The xscreensaver demo window passes custom args overwriting duration
-   dur=10
-fi
 
 # MAIN
 while :; do
