@@ -29,7 +29,7 @@ I.E. /usr/local/bin/shuffler
 You'll need to add an entry to the ${HOME}/.xscreensaver file to allow it to show up in the select screen.
 Note the example has shuffler on its own line below.
 ```
-ail -20 ${HOME}/.xscreensaver 
+tail -20 ${HOME}/.xscreensaver 
   GL: 				cubestack -root				    \n\
   GL: 				cubetwist -root				    \n\
   GL: 				discoball -root				    \n\
