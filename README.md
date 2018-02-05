@@ -54,3 +54,28 @@ authWarningSlack:   20
 ### TODO 
 * Clean up variables/code style
 * Figure out a way to SIGSTOP the MPV fork when xscreensaver SIGSTOPS the main process loop. (Tried with an exec but only seems to respawn after ~120 seconds)
+
+### Verbose Example
+```
+shuffler 10
+Loaded 4 videos from /home/tsunamibear/.config/shuffler/playlist
+Getting time(seconds) of /home/tsunamibear/Videos/Shark.mp4 - 35s
+
+Video/Stream [0] - /home/tsunamibear/Videos/Shark.mp4
+Title: Shark.mp4
+Playing 10s starting at 5 out of 35s
+
+Getting time(seconds) of https://www.twitch.tv/geekandsundry - LIVE
+
+Video/Stream [2] - https://www.twitch.tv/geekandsundry
+Title: Rebroadcast of Shows from the past Week! Lots of good stuff! Enjoy the weekend <3 Remember all that glitters is gold! - !rbschedule
+Playing 10s starting at 0 out of 10s
+
+Getting time(seconds) of https://www.twitch.tv/overwatchleague - ERROR: overwatchleague is offline
+
+Getting time(seconds) of https://www.youtube.com/watch?v=OXtaZ1Ym81c - 41942s
+
+Video/Stream [3] - https://www.youtube.com/watch?v=OXtaZ1Ym81c
+Title: SHADOW OF MORDOR Full Game Walkthrough - Longplay No Commentary
+Playing 10s starting at 23468 out of 41942s
+```
