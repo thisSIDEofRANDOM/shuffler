@@ -5,10 +5,11 @@
 # Useful for xscreensaver or local playback
 # tsunamibear <thissideofrandom@gmail.com>
 
+
 # VARS
 dur=${1:-300}
 _DIR="${HOME}/.config/shuffler"
-_PPNAME=$(ps -o comm= $PPID)
+_PPNAME=$(ps -o command= $PPID)
 
 # PLAYLIST CHECK
 if [ -f ${_DIR}/playlist ]; then
@@ -18,6 +19,14 @@ else
    echo "Create the play list and run again"
    exit
 fi
+
+# CLEANUP FUNCTION
+cleanup() {
+    echo "Closing ${child}"
+    kill ${child} 2>/dev/null
+    exit
+}
+trap cleanup TERM EXIT
 
 # HELPER FUNCTION
 if [[ $@ =~ -gettitles ]]; then
@@ -31,20 +40,23 @@ gettime () {
    mapfile -t results <<<$(youtube-dl --get-title --get-duration ${videos[$1]})
    titles[$1]=${results[0]}
    times[$1]=$(date -ud "1970/01/01 ${results[1]}" +%s)
-   echo "${times[$1]}"
+   echo "${times[$1]}" 
    echo
 }
 
-## PLAY VIDEO FUNCTION
+# PLAY VIDEO FUNCTION
 playvid () {
    if [[ ${_PPNAME} =~ xscreensaver ]]; then
-      mpv --osc=no --no-stop-screensaver --wid=${XSCREENSAVER_WINDOW} --really-quiet --mute=yes --start=${starttime:-0} --length=$dur ${videos[$1]}
-   elif [[ ${_PPNAME} =~ xscreensaver-demo ]]; then
-      break
+      mpv --osc=no --no-stop-screensaver --wid=${XSCREENSAVER_WINDOW} --really-quiet --mute=yes --start=${starttime:-0} --length=$dur ${videos[$1]} &
    else
-      mpv --osc=no --really-quiet --mute=yes --no-border --geometry=961x526+959+554 --start=${starttime:-0} --length=${dur} ${videos[$1]}
+      mpv --osc=no --really-quiet --mute=yes --no-border --geometry=961x526+959+554 --start=${starttime:-0} --length=${dur} ${videos[$1]} &
    fi
 }
+
+# TEMPORARY SETTING FOR DEMO WINDOW
+if [[ ${_PPNAME} == xscreensaver-demo ]]; then
+   dur=10
+fi
 
 # MAIN
 while :; do
@@ -53,7 +65,6 @@ while :; do
   
    # Get time if we don't have it for next video
    if [ -z "${times[$vindex]}" ]; then gettime $vindex || break; fi
-
    # Set random start time based on duration
    starttime=$((RANDOM%(${times[$vindex]}-$dur)))
 
@@ -65,5 +76,5 @@ while :; do
    echo "Title: ${titles[$vindex]}"
    echo "${dur}(seconds) starting at ${starttime} out of ${times[$vindex]}"
    echo
-   playvid ${vindex} & 
+   playvid ${vindex}; child=$!
 done
