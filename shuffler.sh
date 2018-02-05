@@ -23,7 +23,7 @@ _PPNAME=$(ps -o command= $PPID)
 
 # PLAYLIST CHECK
 if [ -f ${_DIR}/playlist ]; then
-   mapfile -t videos < ${_DIR}/playlist && echo "Loaded ${#videos[@]} videos from ${_DIR}/playlist"
+   mapfile -t videos < ${_DIR}/playlist && echo "Loaded ${#videos[@]} videos/streams from ${_DIR}/playlist"
 else
    echo "Couldn't find playlist under ${_DIR}"
    echo "Create the play list and run again"
