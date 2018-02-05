@@ -56,8 +56,8 @@ authWarningSlack:   20
 * Figure out a way to SIGSTOP the MPV fork when xscreensaver SIGSTOPS the main process loop. (Tried with an exec but only seems to respawn after ~120 seconds)
 
 ### Verbose Example
+$ shuffler 10
 ```
-shuffler 10
 Loaded 4 videos from /home/tsunamibear/.config/shuffler/playlist
 Getting time(seconds) of /home/tsunamibear/Videos/Shark.mp4 - 35s
 
