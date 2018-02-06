@@ -3,7 +3,7 @@ Cut clips of X time from a playlist of youtube/twitch/local videos. Useful for g
 
 ## Usage
 ```
-Usage:  [#] [hH] [printstring]
+Usage:  [#] [hH] [gettitles]
  Options:
    hH		Print usage and exit
    gettitles	Anywhere in arg this will print titles/descriptions and exit
