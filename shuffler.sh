@@ -75,7 +75,15 @@ gettime () {
    else
       mapfile -t results <<<$(youtube-dl --get-title --get-duration ${videos[$1]})
       titles[$1]=${results[0]}
-      times[$1]=$(date -ud "1970/01/01 ${results[1]}" +%s)
+
+      # Format the result returned by --get-duration, adding 00s
+      if [[ ${#results[1]} -eq 5 ]]; then
+         times[$1]=$(date -ud "1970/01/01 00:${results[1]}" +%s)
+      elif [[ ${#results[1]} -eq 2 ]]; then
+         times[$1]=$(date -ud "1970/01/01 00:00:${results[1]}" +%s)
+      else
+         times[$1]=$(date -ud "1970/01/01 ${results[1]}" +%s)
+      fi
    fi
    
    # Return time for stdout
