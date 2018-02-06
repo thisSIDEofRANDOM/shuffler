@@ -35,7 +35,7 @@ trap cleanup INT TERM
 
 # HELP FUNCTION
 print_help() {
-   echo "Usage: ${FULL_NAME} [#] [hH] [printstring]"
+   echo "Usage: ${FULL_NAME} [#] [hH] [gettitles]"
    sed -ne 's/^#~//p' ${0}
 }
 
