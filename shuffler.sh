@@ -149,12 +149,6 @@ elif [[ ${_PPNAME} == xscreensaver ]]; then
    watcher &
 fi
 
-# PRINT HELP AND EXIT
-if [[ ${@} =~ [hH] ]] || [[ ! ${dur} =~ ^[0-9]+$ ]]; then
-   print_help
-   exit
-fi 
-
 # PRINT TITLES AND EXIT
 if [[ $@ =~ gettitles ]]; then
    for i in ${!videos[@]}; do
@@ -180,6 +174,12 @@ if [[ $@ =~ gettitles ]]; then
    done   
    exit
 fi
+
+# PRINT HELP AND EXIT
+if [[ ${@} =~ [hH] ]] || [[ ! ${dur} =~ ^[0-9]+$ ]]; then
+   print_help
+   exit
+fi 
 
 # MAIN
 while :; do
