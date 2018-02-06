@@ -103,12 +103,12 @@ watcher() {
    # Because this doesn't hit our child and can't be trapped we have to handle this 
    while :; do
       # When main script is hit by SIGSTOP from xscreensaver forward to MPV
-      if [[ $freeze -eq 0 ]] && [[ $(ps -q $$ -o state --no-headers) == T ]]; then
+      if [[ $freeze -eq 0 ]] && [[ $(ps -q $$ -o state --no-headers) == T ]] && pkill -0 -P $$ mpv; then
          echo "Freezing $(pgrep -P $$ mpv)"
 	 kill -SIGSTOP $(pgrep -P $$ mpv)
 	 freeze=1
       # Resume MPV when main pid resumes
-      elif [[ $freeze -eq 1 ]] && [[ ! $(ps -q $$ -o state --no-headers) == T ]]; then
+      elif [[ $freeze -eq 1 ]] && [[ ! $(ps -q $$ -o state --no-headers) == T ]] && pkill -0 -P $$ mpv; then
          echo "Unfreezing $(pgrep -P $$ mpv)"
 	 kill -SIGCONT $(pgrep -P $$ mpv)
 	 freeze=0
