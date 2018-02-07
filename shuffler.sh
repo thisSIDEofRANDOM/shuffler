@@ -199,6 +199,7 @@ fi
 
 # MAIN
 while :; do
+   
    # Check error count and sleep if greater than 5
    if [[ ${ERRCOUNT} -ge 5 ]]; then
       echo "Error count - ${ERRCOUNT}, sleeping 10s..."
@@ -222,7 +223,7 @@ while :; do
          wait $(pgrep -P ${$} mpv)
 
 	 # Track errors
-	 if [[ ${?} -lt 3 ]]; then
+	 if [[ ${?} -gt 0 ]] && [[ ${?} -lt 3 ]]; then
             ((errcount++))
          elif [[ ${errcount} -gt 0 ]]; then
             ((errcount--))
@@ -237,7 +238,7 @@ while :; do
    ( pkill -0 -P ${$} mpv ) && wait $(pgrep -P ${$} mpv)
 
    # Try to track errors as best we can
-   if [[ ${?} -lt 3 ]]; then 
+   if [[ ${?} -gt 0 ]] && [[ ${?} -lt 3 ]]; then 
       ((ERRCOUNT++))
    elif [[ ${ERRCOUNT} -gt 0 ]]; then
       ((ERRCOUNT--))
