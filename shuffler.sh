@@ -23,7 +23,7 @@
 # VARS
 DUR=${1:-300}
 SIZE="--geometry=961x526+959+554"
-ERRCOUNT=0
+ERRCOUNT=0; MPVRET=0
 _DIR="${HOME}/.config/shuffler"
 _PPNAME=$(ps -o comm= ${PPID})
 
@@ -58,7 +58,7 @@ gettime () {
       TIMES[${1}]=$(date -ud "1970/01/01 $(ffprobe -i ${VIDEOS[${1}]} -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal)" +%s)
    # Catch twitch stream, time will alway equal duration
    elif [[ ${VIDEOS[${1}]} =~ twitch ]]; then
-      TITLES[${1}]=$(youtube-dl --get-description ${VIDEOS[${1}]})
+      TITLES[${1}]=$(youtube-dl --socket-timeout 5 --get-description ${VIDEOS[${1}]})
      
       # If stream offline return an error to skip trying to play.
       # This should also allow us to check later if it comes online 
@@ -76,7 +76,7 @@ gettime () {
       return
    # Catch any others, only tested with youtube links
    else
-      mapfile -t RESULTS <<<$(youtube-dl --get-title --get-duration ${VIDEOS[${1}]})
+      mapfile -t RESULTS <<<$(youtube-dl --socket-timeout 5 --get-title --get-duration ${VIDEOS[${1}]})
       TITLES[${1}]=${RESULTS[0]}
 
       # Format the result returned by --get-duration, adding 00s
@@ -179,11 +179,11 @@ if [[ ${@} =~ gettitles ]]; then
 	 # Grab twitch stream description
 	 if [[ ${VIDEOS[${i}]} =~ twitch ]]; then
             echo "Description for ${VIDEOS[${i}]}"
-	    youtube-dl --get-description ${VIDEOS[${i}]}
+	    youtube-dl --socket-timeout 5 --get-description ${VIDEOS[${i}]}
 	 # Youtube video title
          else
             echo "Title of ${VIDEOS[${i}]}"
-	    youtube-dl --get-title ${VIDEOS[${i}]} 2>/dev/null || echo "Error retrieving..."
+	    youtube-dl --socket-timeout 5 --get-title ${VIDEOS[${i}]} 2>/dev/null || echo "Error retrieving..."
          fi
 	 echo
       fi
@@ -221,9 +221,10 @@ while :; do
       if pkill -0 -P ${$} mpv; then 
          echo "Waiting to check if ${VIDEOS[${VINDEX}]} is LIVE" 
          wait $(pgrep -P ${$} mpv)
-
+         MPVRET=${?}
+	 
 	 # Track errors
-	 if [[ ${?} -gt 0 ]] && [[ ${?} -lt 3 ]]; then
+	 if [[ ${MPVRET} -gt 0 ]] && [[ ${MPVRET} -lt 3 ]]; then
             ((errcount++))
          elif [[ ${errcount} -gt 0 ]]; then
             ((errcount--))
@@ -236,9 +237,10 @@ while :; do
    
    # Wait for any background videos to finish before playing next
    ( pkill -0 -P ${$} mpv ) && wait $(pgrep -P ${$} mpv)
-
+   MPVRET=${?}
+   
    # Try to track errors as best we can
-   if [[ ${?} -gt 0 ]] && [[ ${?} -lt 3 ]]; then 
+   if [[ ${MPVRET} -gt 0 ]] && [[ ${MPVRET} -lt 3 ]]; then 
       ((ERRCOUNT++))
    elif [[ ${ERRCOUNT} -gt 0 ]]; then
       ((ERRCOUNT--))
