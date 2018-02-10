@@ -31,6 +31,7 @@ _PPNAME=$(ps -o comm= ${PPID})
 cleanup() {
    kill -SIGCONT $(jobs -p) 2>/dev/null
    kill $(jobs -p) 2>/dev/null
+   echo
    exit
 }
 trap cleanup INT TERM 
@@ -56,7 +57,7 @@ gettime () {
    if [ -f ${VIDEOS[${1}]} ]; then
       TITLES[${1}]=${VIDEOS[${1}]##*/}
       TIMES[${1}]=$(date -ud "1970/01/01 $(ffprobe -i ${VIDEOS[${1}]} -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal)" +%s)
-   # Catch twitch stream, time will alway equal duration
+   # Catch twitch stream, time will always equal duration
    elif [[ ${VIDEOS[${1}]} =~ twitch ]]; then
       TITLES[${1}]=$(youtube-dl --socket-timeout 5 --get-description ${VIDEOS[${1}]})
      
@@ -76,7 +77,7 @@ gettime () {
       return
    # Catch any others, only tested with youtube links
    else
-      mapfile -t RESULTS <<<$(youtube-dl --socket-timeout 5 --get-title --get-duration ${VIDEOS[${1}]})
+      mapfile -t RESULTS <<<$(youtube-dl --socket-timeout 5 --get-title --get-duration ${VIDEOS[${1}]} 2> /dev/null)
       TITLES[${1}]=${RESULTS[0]}
 
       # Format the result returned by --get-duration, adding 00s
@@ -225,9 +226,9 @@ while :; do
 	 
 	 # Track errors
 	 if [[ ${MPVRET} -gt 0 ]] && [[ ${MPVRET} -lt 3 ]]; then
-            ((errcount++))
+            ((ERRCOUNT++))
          elif [[ ${errcount} -gt 0 ]]; then
-            ((errcount--))
+            ((ERRCOUNT--))
          fi
       fi
    fi
@@ -240,7 +241,7 @@ while :; do
    MPVRET=${?}
    
    # Try to track errors as best we can
-   if [[ ${MPVRET} -gt 0 ]] && [[ ${MPVRET} -lt 3 ]]; then 
+   if [[ ${MPVRET} -gt 0 ]] && [[ ${MPVRET} -lt 3 ]] && [[ ! ${VIDEOS[${VINDEX}]} =~ twitch ]]; then 
       ((ERRCOUNT++))
    elif [[ ${ERRCOUNT} -gt 0 ]]; then
       ((ERRCOUNT--))
