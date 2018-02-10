@@ -171,7 +171,7 @@ if [[ ${@} =~ gettitles ]]; then
 
       # Regular file
       if [ -f ${VIDEOS[${i}]} ]; then
-         echo "File name"
+         echo "Local file"
 	 echo ${VIDEOS[${i}]}
 	 echo
       # Titles for web. Tested with youtube/twitch
