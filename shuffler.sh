@@ -75,9 +75,35 @@ gettime () {
        fi
 
       return
+   # Handle YouTube playlists
+   elif [[ ${VIDEOS[${1}]} =~ playlist ]] && [[ ${VIDEOS[${1}]} =~ youtube ]]; then
+      mapfile -t RESULTS <<<$(youtube-dl --playlist-random --socket-timeout 5 --max-downloads 1 --get-title --get-id --get-duration ${VIDEOS[${1}]} 2> /dev/null)
+      TITLES[${1}]=${RESULTS[0]}
+      YLISTVID[${1}]=${RESULTS[1]}
+
+      # Format the result returned by --get-duration, adding 00s
+      if [[ ${#RESULTS[2]} -gt 6 ]]; then
+         TIMES[${1}]=$(date -ud "1970/01/01 ${RESULTS[2]}" +%s)
+      elif [[ ${#RESULTS[2]} -gt 3 ]]; then
+         TIMES[${1}]=$(date -ud "1970/01/01 00:${RESULTS[2]}" +%s)
+      elif [[ ${#RESULTS[2]} -gt 0 ]]; then
+         TIMES[${1}]=$(date -ud "1970/01/01 00:00:${RESULTS[2]}" +%s)
+      else
+	 ((ERRCOUNT++))
+	 echo
+         unset -v TIMES[${1}]
+	 return 1
+      fi
+
+      # Return time and selected playlist video
+      echo "PLAYLIST"
+      echo "Selected https://www.youtube.com/watch?v=${YLISTVID[${1}]} - ${TIMES[${1}]}"
+      echo
+
+      return
    # Catch any others, only tested with youtube links
    else
-      mapfile -t RESULTS <<<$(youtube-dl --socket-timeout 5 --get-title --get-duration ${VIDEOS[${1}]} 2> /dev/null)
+      mapfile -t RESULTS <<<$(youtube-dl --socket-timeout 5 --max-downloads 1 --get-title --get-duration ${VIDEOS[${1}]} 2> /dev/null)
       TITLES[${1}]=${RESULTS[0]}
 
       # Format the result returned by --get-duration, adding 00s
@@ -102,12 +128,19 @@ gettime () {
 
 # PLAY VIDEO FUNCTION
 playvid () {
+   # Set video url for playback, this should allow playlist swapping
+   if [[ -v YLISTVID[${1}] ]]; then 
+      local VURL="https://www.youtube.com/watch?v=${YLISTVID[${1}]}"
+   else
+      local VURL=${VIDEOS[${1}]}
+   fi
+
    # Draw to xscreensaver window if run from xscreensaver
    if [[ ${_PPNAME} =~ xscreensaver ]]; then
-      mpv --network-timeout=5 --osc=no --no-stop-screensaver --wid=${XSCREENSAVER_WINDOW} --really-quiet --mute=yes --start=${STARTTIME:-0} --length=${DUR} ${VIDEOS[${1}]} &
+      mpv --network-timeout=5 --osc=no --no-stop-screensaver --wid=${XSCREENSAVER_WINDOW} --really-quiet --mute=yes --start=${STARTTIME:-0} --length=${DUR} ${VURL} &
    # Generic play command
    else
-      mpv --network-timeout=5 --osc=no --really-quiet --mute=yes --no-border ${SIZE} --start=${STARTTIME:-0} --length=${DUR} ${VIDEOS[${1}]} &
+      mpv --network-timeout=5 --osc=no --really-quiet --mute=yes --no-border ${SIZE} --start=${STARTTIME:-0} --length=${DUR} ${VURL} &
    fi
 }
 
@@ -231,6 +264,9 @@ while :; do
             ((ERRCOUNT--))
          fi
       fi
+   # Always unset playlist stream time since well get a random video in the playlist
+   elif [[ ${VIDEOS[${VINDEX}]} =~ playlist ]] && [[ ${VIDEOS[${VINDEX}]} =~ youtube ]]; then
+      unset -v TIMES[${VINDEX}]
    fi
 
    # Get time if we don't have it for next video
@@ -260,6 +296,9 @@ while :; do
 
    # Start up video by index. Background so we can get the next video ready to play
    echo "Video/Stream [${VINDEX}] - ${VIDEOS[${VINDEX}]}"
+   if [[ -v YLISTVID[${VINDEX}] ]]; then 
+      echo "Playlist Video: https://www.youtube.com/watch?v=${YLISTVID[${VINDEX}]}"
+   fi
    echo "Title: ${TITLES[${VINDEX}]}"
    echo "Playing ${DUR}s starting at ${STARTTIME} out of ${TIMES[${VINDEX}]}s"
    echo
