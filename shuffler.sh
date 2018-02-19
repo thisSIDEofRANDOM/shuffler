@@ -7,6 +7,8 @@
 #
 #~ Options:
 #~   hH		Print usage and exit
+#~   fullscreen	Toggles fullscreenmode for non screensaver playback
+#~   nomute	Turns mute off enabling sound for playback
 #~   gettitles	Anywhere in arg this will print titles/descriptions and exit
 #~ 
 #~   #		Arg one as number of seconds to play before moving to next clip
@@ -23,14 +25,15 @@
 # VARS
 DUR=${1:-300}
 SIZE="--geometry=961x526+959+554"
+MUTE="yes"
 ERRCOUNT=0; MPVRET=0
 _DIR="${HOME}/.config/shuffler"
 _PPNAME=$(ps -o comm= ${PPID})
 
 # CLEANUP FUNCTION
 cleanup() {
-   kill -SIGCONT $(jobs -p) 2>/dev/null
-   kill $(jobs -p) 2>/dev/null
+   kill -SIGCONT $(jobs -p) 2> /dev/null
+   kill $(jobs -p) 2> /dev/null
    echo
    exit
 }
@@ -38,7 +41,7 @@ trap cleanup INT TERM
 
 # HELP FUNCTION
 print_help() {
-   echo "Usage: ${FULL_NAME} [#] [hH] [gettitles]"
+   echo "Usage: ${FULL_NAME} [#] {hH} [gettitles] [nomute] [fullscreen]"
    sed -ne 's/^#~//p' ${0}
 }
 
@@ -90,8 +93,8 @@ gettime () {
          TIMES[${1}]=$(date -ud "1970/01/01 00:00:${RESULTS[2]}" +%s)
       else
 	 ((ERRCOUNT++))
-	 echo
-         unset -v TIMES[${1}]
+	 echo "ERROR: Invalid time format"
+         unset -v TIMES[${1}] TITLES[${1}]
 	 return 1
       fi
 
@@ -115,8 +118,8 @@ gettime () {
          TIMES[${1}]=$(date -ud "1970/01/01 00:00:${RESULTS[1]}" +%s)
       else
 	 ((ERRCOUNT++))
-	 echo
-         unset -v TIMES[${1}]
+	 echo "ERROR: Invalid time format"
+         unset -v TIMES[${1}] TITLES[${1}]
 	 return 1
       fi
    fi
@@ -137,10 +140,10 @@ playvid () {
 
    # Draw to xscreensaver window if run from xscreensaver
    if [[ ${_PPNAME} =~ xscreensaver ]]; then
-      mpv --network-timeout=5 --osc=no --no-stop-screensaver --wid=${XSCREENSAVER_WINDOW} --really-quiet --mute=yes --start=${STARTTIME:-0} --length=${DUR} ${VURL} &
+      mpv --network-timeout=5 --osc=no --no-stop-screensaver --wid=${XSCREENSAVER_WINDOW} --really-quiet --mute=${MUTE} --start=${STARTTIME:-0} --length=${DUR} ${VURL} &
    # Generic play command
    else
-      mpv --network-timeout=5 --osc=no --really-quiet --mute=yes --no-border ${SIZE} --start=${STARTTIME:-0} --length=${DUR} ${VURL} &
+      mpv --network-timeout=5 --osc=no --really-quiet --mute=${MUTE} --no-border ${SIZE} --start=${STARTTIME:-0} --length=${DUR} ${VURL} &
    fi
 }
 
@@ -188,6 +191,12 @@ else
    exit
 fi
 
+# HELP SWITCH
+if [[ ${@} =~ [hH] ]] || [[ ! ${DUR} =~ ^[0-9]+$ ]]; then
+   print_help
+   exit
+fi
+
 # XSCREENSAVER SPECIFICS 
 if [[ ${_PPNAME} == xscreensaver-de ]]; then
    # The xscreensaver demo window passes custom args overwriting duration
@@ -195,12 +204,13 @@ if [[ ${_PPNAME} == xscreensaver-de ]]; then
 elif [[ ${_PPNAME} == xscreensaver ]]; then
    # Fork this to freeze video playback on password prompt.
    echo "XScreensaver detected, spinning up SIG watcher for proper freezing"
-   echo
    watcher &
 fi
 
 # PRINT TITLES AND EXIT
 if [[ ${@} =~ gettitles ]]; then
+   echo
+
    for i in ${!VIDEOS[@]}; do
 
       # Regular file
@@ -217,7 +227,7 @@ if [[ ${@} =~ gettitles ]]; then
 	 # Youtube video title
          else
             echo "Title of ${VIDEOS[${i}]}"
-	    youtube-dl --socket-timeout 5 --get-title ${VIDEOS[${i}]} 2>/dev/null || echo "Error retrieving..."
+	    youtube-dl --socket-timeout 5 --get-title ${VIDEOS[${i}]} 2> /dev/null || echo "Error retrieving..."
          fi
 	 echo
       fi
@@ -225,11 +235,20 @@ if [[ ${@} =~ gettitles ]]; then
    exit
 fi
 
-# PRINT HELP AND EXIT
-if [[ ${@} =~ [hH] ]] || [[ ! ${DUR} =~ ^[0-9]+$ ]]; then
-   print_help
-   exit
-fi 
+# FULLSCREEN SWITCH
+if [[ ${@} =~ fullscreen ]]; then
+   echo "Setting to fullscreen playback mode"
+   SIZE="--fs"
+fi
+
+# MUTE SWITCH
+if [[ ${@} =~ nomute ]]; then
+   echo "Enabling audio"
+   MUTE="no"
+fi
+
+# END OF PRE MAIN OUTPUT
+echo
 
 # MAIN
 while :; do
@@ -249,7 +268,7 @@ while :; do
  
    # Always unset twitch stream times to check if live before this run
    if [[ ${VIDEOS[${VINDEX}]} =~ twitch ]]; then
-      unset -v TIMES[${VINDEX}]
+      unset -v TIMES[${VINDEX}] TITLES[${VINDEX}]
 
       # Wait sooner for twitch streams to make sure not to check if live too early
       if pkill -0 -P ${$} mpv; then 
@@ -266,7 +285,7 @@ while :; do
       fi
    # Always unset playlist stream time since well get a random video in the playlist
    elif [[ ${VIDEOS[${VINDEX}]} =~ playlist ]] && [[ ${VIDEOS[${VINDEX}]} =~ youtube ]]; then
-      unset -v TIMES[${VINDEX}]
+      unset -v TIMES[${VINDEX}] TITLES[${VINDEX}]
    fi
 
    # Get time if we don't have it for next video
