@@ -191,12 +191,6 @@ else
    exit
 fi
 
-# HELP SWITCH
-if [[ ${@} =~ [hH] ]] || [[ ! ${DUR} =~ ^[0-9]+$ ]]; then
-   print_help
-   exit
-fi
-
 # XSCREENSAVER SPECIFICS 
 if [[ ${_PPNAME} == xscreensaver-de ]]; then
    # The xscreensaver demo window passes custom args overwriting duration
@@ -205,6 +199,12 @@ elif [[ ${_PPNAME} == xscreensaver ]]; then
    # Fork this to freeze video playback on password prompt.
    echo "XScreensaver detected, spinning up SIG watcher for proper freezing"
    watcher &
+fi
+
+# HELP SWITCH
+if [[ ${@} =~ [hH] ]] || [[ ! ${DUR} =~ ^[0-9]+$ ]]; then
+   print_help
+   exit
 fi
 
 # PRINT TITLES AND EXIT
