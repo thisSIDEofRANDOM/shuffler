@@ -9,6 +9,7 @@
 #~   hH		Print usage and exit
 #~   fullscreen	Toggles fullscreenmode for non screensaver playback
 #~   nomute	Turns mute off enabling sound for playback
+#~   ontop	Sets MPV to start in 'ontop' mode
 #~   gettitles	Anywhere in arg this will print titles/descriptions and exit
 #~ 
 #~   #		Arg one as number of seconds to play before moving to next clip
@@ -26,6 +27,7 @@
 DUR=${1:-300}
 SIZE="--geometry=961x526+959+554"
 MUTE="yes"
+TOP=""
 ERRCOUNT=0; MPVRET=0
 _DIR="${HOME}/.config/shuffler"
 _PPNAME=$(ps -o comm= ${PPID})
@@ -51,18 +53,32 @@ rnum() {
    od -vAn -N3 -tu < /dev/urandom
 }
 
+# CONVERT TO SECONDS FUNCTION
+getseconds () {
+   local SECONDS=0
+
+   # Step through sexgesimal time stamps multiplying by 60 on the way
+   for SEC in ${1//:/ }; do
+      # Breaks with a day field, forcing base 10 for leading 0 numbers
+      SECONDS=$((( SECONDS *= 60 ) + 10#${SEC} ))
+   done
+
+   # Return total
+   echo ${SECONDS}
+}
+
 # GET TIME IN SECONDS FUNCTION
 gettime () {
    # Start of function
    echo -n "Getting status/time(seconds) of ${VIDEOS[${1}]} - "
    
-   # Get regular file time
+   # Get regular file time in sexagesimal time stamp and convert to seconds
    if [ -f ${VIDEOS[${1}]} ]; then
       TITLES[${1}]=${VIDEOS[${1}]##*/}
-      TIMES[${1}]=$(date -ud "1970/01/01 $(ffprobe -i ${VIDEOS[${1}]} -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal)" +%s)
+      TIMES[${1}]=$(getseconds $(ffprobe -i ${VIDEOS[${1}]} -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal | cut -d. -f1))
    # Catch twitch stream, time will always equal duration
    elif [[ ${VIDEOS[${1}]} =~ twitch ]]; then
-      TITLES[${1}]=$(youtube-dl --socket-timeout 5 --get-description ${VIDEOS[${1}]})
+	   TITLES[${1}]=$(youtube-dl --socket-timeout 5 --get-description ${VIDEOS[${1}]})
      
       # If stream offline return an error to skip trying to play.
       # This should also allow us to check later if it comes online 
@@ -84,16 +100,13 @@ gettime () {
       TITLES[${1}]=${RESULTS[0]}
       YLISTVID[${1}]=${RESULTS[1]}
 
-      # Format the result returned by --get-duration, adding 00s
-      if [[ ${#RESULTS[2]} -gt 6 ]]; then
-         TIMES[${1}]=$(date -ud "1970/01/01 ${RESULTS[2]}" +%s)
-      elif [[ ${#RESULTS[2]} -gt 3 ]]; then
-         TIMES[${1}]=$(date -ud "1970/01/01 00:${RESULTS[2]}" +%s)
-      elif [[ ${#RESULTS[2]} -gt 0 ]]; then
-         TIMES[${1}]=$(date -ud "1970/01/01 00:00:${RESULTS[2]}" +%s)
+      # Convert the result returned by --get-duration to seconds
+      if [[ -v RESULTS[2] ]] && [[ ${#RESULTS[2]} -le 8 ]]; then
+         TIMES[${1}]=$(getseconds ${RESULTS[2]})
       else
 	 ((ERRCOUNT++))
 	 echo "ERROR: Invalid time format"
+	 echo
          unset -v TIMES[${1}] TITLES[${1}]
 	 return 1
       fi
@@ -109,16 +122,13 @@ gettime () {
       mapfile -t RESULTS <<<$(youtube-dl --socket-timeout 5 --max-downloads 1 --get-title --get-duration ${VIDEOS[${1}]} 2> /dev/null)
       TITLES[${1}]=${RESULTS[0]}
 
-      # Format the result returned by --get-duration, adding 00s
-      if [[ ${#RESULTS[1]} -gt 6 ]]; then
-         TIMES[${1}]=$(date -ud "1970/01/01 ${RESULTS[1]}" +%s)
-      elif [[ ${#RESULTS[1]} -gt 3 ]]; then
-         TIMES[${1}]=$(date -ud "1970/01/01 00:${RESULTS[1]}" +%s)
-      elif [[ ${#RESULTS[1]} -gt 0 ]]; then
-         TIMES[${1}]=$(date -ud "1970/01/01 00:00:${RESULTS[1]}" +%s)
+      # Convert the result returned by --get-duration to seconds
+      if [[ -v RESULTS[1] ]] && [[ ${#RESULTS[1]} -le 8 ]]; then
+         TIMES[${1}]=$(getseconds ${RESULTS[1]})
       else
 	 ((ERRCOUNT++))
 	 echo "ERROR: Invalid time format"
+	 echo
          unset -v TIMES[${1}] TITLES[${1}]
 	 return 1
       fi
@@ -143,7 +153,7 @@ playvid () {
       mpv --network-timeout=5 --osc=no --no-stop-screensaver --wid=${XSCREENSAVER_WINDOW} --really-quiet --mute=${MUTE} --start=${STARTTIME:-0} --length=${DUR} ${VURL} &
    # Generic play command
    else
-      mpv --network-timeout=5 --osc=no --really-quiet --mute=${MUTE} --no-border ${SIZE} --start=${STARTTIME:-0} --length=${DUR} ${VURL} &
+      mpv --network-timeout=5 --osc=no --really-quiet --mute=${MUTE} --no-border ${SIZE} --start=${STARTTIME:-0} --length=${DUR} ${TOP} ${VURL} &
    fi
 }
 
@@ -237,14 +247,20 @@ fi
 
 # FULLSCREEN SWITCH
 if [[ ${@} =~ fullscreen ]]; then
-   echo "Setting to fullscreen playback mode"
+   echo "[Enabled] - Fullscreen"
    SIZE="--fs"
 fi
 
 # MUTE SWITCH
 if [[ ${@} =~ nomute ]]; then
-   echo "Enabling audio"
+   echo "[Enabled] - Audio"
    MUTE="no"
+fi
+
+# ONTOP SWITCH
+if [[ ${@} =~ ontop ]]; then
+   echo "[Enabled] - Ontop"
+   TOP="--ontop"
 fi
 
 # END OF PRE MAIN OUTPUT
