@@ -11,6 +11,7 @@
 #~   nomute	Turns mute off enabling sound for playback
 #~   ontop	Sets MPV to start in 'ontop' mode
 #~   gettitles	Anywhere in arg this will print titles/descriptions and exit
+#~   twitch	Extracts ONLY twitch videos from playlist
 #~ 
 #~   #		Arg one as number of seconds to play before moving to next clip
 #~
@@ -78,12 +79,13 @@ gettime () {
       TIMES[${1}]=$(getseconds $(ffprobe -i ${VIDEOS[${1}]} -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal | cut -d. -f1))
    # Catch twitch stream, time will always equal duration
    elif [[ ${VIDEOS[${1}]} =~ twitch ]]; then
-	   TITLES[${1}]=$(youtube-dl --socket-timeout 5 --get-description ${VIDEOS[${1}]})
+	   TITLES[${1}]=$(youtube-dl --socket-timeout 5 --get-description ${VIDEOS[${1}]} 2> /dev/null)
      
       # If stream offline return an error to skip trying to play.
       # This should also allow us to check later if it comes online 
       if [ ${?} -gt 0 ]; then
 	 ((ERRCOUNT++))
+	 echo "ERROR: Appears offline"
          echo 
          return 1
       # Otherwise we set the time of the video to duration since we will always stream for max time
@@ -211,8 +213,24 @@ elif [[ ${_PPNAME} == xscreensaver ]]; then
    watcher &
 fi
 
+# TWITCH ONLY SWITCH
+if [[ ${@} =~ twitch ]]; then
+   declare -a TEMPARRAY
+
+   # Copy twitch streams to temp array and back
+   for VALUE in ${VIDEOS[@]}; do
+      [[ $VALUE =~ twitch ]] && TEMPARRAY+=($VALUE)
+   done
+   
+   # Write over previous array and unset our temp array
+   VIDEOS=("${TEMPARRAY[@]}")
+   unset -v TEMPARRAY
+   
+   echo "Loaded ${#VIDEOS[@]} twitch streams from previous playlist"
+fi
+
 # HELP SWITCH
-if [[ ${@} =~ [hH] ]] || [[ ! ${DUR} =~ ^[0-9]+$ ]]; then
+if [[ ${@} =~ [[:space:]][hH] ]] || [[ ! ${DUR} =~ ^[0-9]+$ ]] || [[ ${#VIDEOS[@]} -eq 0 ]]; then
    print_help
    exit
 fi
