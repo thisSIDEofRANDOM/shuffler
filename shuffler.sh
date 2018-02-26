@@ -226,7 +226,7 @@ if [[ ${@} =~ twitch ]]; then
    VIDEOS=("${TEMPARRAY[@]}")
    unset -v TEMPARRAY
    
-   echo "Loaded ${#VIDEOS[@]} twitch streams from previous playlist"
+   echo "Filtered ${#VIDEOS[@]} twitch streams from playlist"
 fi
 
 # HELP SWITCH
