@@ -3,10 +3,14 @@ Cut clips of X time from a playlist of youtube/twitch/local videos. Useful for g
 
 ## Usage
 ```
-Usage:  [#] [hH] [gettitles]
+Usage:  [#] {hH} [gettitles] [nomute] [fullscreen]
  Options:
    hH		Print usage and exit
+   fullscreen	Toggles fullscreenmode for non screensaver playback
+   nomute	Turns mute off enabling sound for playback
+   ontop	Sets MPV to start in 'ontop' mode
    gettitles	Anywhere in arg this will print titles/descriptions and exit
+   twitch	Extracts ONLY twitch videos from playlist
  
    #		Arg one as number of seconds to play before moving to next clip
 
@@ -18,6 +22,7 @@ Usage:  [#] [hH] [gettitles]
    If spun up by XScreensaver, will spawn a watcher function
    This function handles freezing video playback when SIGSTOP
     is sent to base script by XScreensaver for password entry
+
 ```
 
 ## Playlists
